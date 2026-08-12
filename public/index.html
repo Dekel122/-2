@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>לוח הזמנות · הקו הטלפוני</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1714;
+    --ink-soft:#5f574e;
+    --paper:#edece7;          /* רקע קריר, לא קרם */
+    --slip:#fbfaf6;
+    --line:#d7d0c4;
+    --line-strong:#c3b9a8;
+    --seal:#7b1e28;           /* בורדו — חותמת */
+    --seal-ink:#651721;
+    --paid:#2f6b4f;
+    --paid-bg:#e6f0ea;
+    --pend:#9a6a06;
+    --pend-bg:#f6eed8;
+    --new:#7b1e28;
+    --shadow:0 1px 0 rgba(0,0,0,.04), 0 8px 24px -18px rgba(27,23,20,.5);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Heebo",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Frank Ruhl Libre",Georgia,serif;margin:0}
+
+  /* ---- Header ---- */
+  header{
+    background:var(--slip);
+    border-bottom:2px solid var(--seal);
+    padding:14px 20px;
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    position:sticky;top:0;z-index:20;
+  }
+  header h1{font-size:24px;font-weight:900;letter-spacing:-.01em}
+  header .sub{color:var(--ink-soft);font-size:13px}
+  header .spacer{flex:1}
+  .pill-count{
+    font-weight:700;font-size:13px;color:var(--seal);
+    border:1px solid var(--line-strong);border-radius:999px;padding:3px 11px;background:#fff;
+  }
+  .ghost-btn{
+    font-family:inherit;font-size:13px;font-weight:500;color:var(--ink);
+    background:#fff;border:1px solid var(--line-strong);border-radius:8px;
+    padding:7px 13px;cursor:pointer;transition:.15s;
+  }
+  .ghost-btn:hover{border-color:var(--seal);color:var(--seal)}
+  .ghost-btn:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+  /* ---- Toolbar ---- */
+  .toolbar{
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+    padding:14px 20px 0;max-width:1080px;margin:0 auto;
+  }
+  .tab{
+    font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-soft);
+    background:transparent;border:1px solid transparent;border-radius:8px;
+    padding:6px 12px;cursor:pointer;transition:.15s;
+  }
+  .tab[aria-selected="true"]{background:var(--seal);color:#fff}
+  .tab:hover:not([aria-selected="true"]){background:#fff;color:var(--ink)}
+  .toolbar .spacer{flex:1}
+
+  main{max-width:1080px;margin:0 auto;padding:16px 20px 60px}
+
+  /* ---- Order slip (signature) ---- */
+  .slips{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .slip{
+    background:var(--slip);border:1px solid var(--line);border-radius:4px;
+    box-shadow:var(--shadow);position:relative;padding:18px 18px 14px;
+  }
+  /* קצה מנוקב עליון של פתק ההזמנה */
+  .slip::before{
+    content:"";position:absolute;inset:0 0 auto 0;height:8px;
+    background:
+      radial-gradient(circle at 6px -2px, transparent 5px, var(--slip) 5px) 0 0/12px 8px repeat-x;
+    border-top:1px solid var(--line);
+  }
+  .slip-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:4px}
+  .stamp{
+    font-family:"Frank Ruhl Libre",serif;font-weight:900;font-size:15px;color:var(--seal-ink);
+    border:2px solid var(--seal);border-radius:3px;padding:2px 9px;letter-spacing:.02em;
+    transform:rotate(-2deg);white-space:nowrap;background:rgba(123,30,40,.03);
+  }
+  .when{font-size:12px;color:var(--ink-soft);text-align:start}
+  .prod{font-family:"Frank Ruhl Libre",serif;font-size:20px;font-weight:700;margin:12px 0 2px}
+  .qtytotal{font-size:14px;color:var(--ink-soft)}
+  .qtytotal b{color:var(--ink)}
+
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+  .badge{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;border:1px solid transparent}
+  .b-paid{color:var(--paid);background:var(--paid-bg);border-color:#bcd9c9}
+  .b-pend{color:var(--pend);background:var(--pend-bg);border-color:#e5d3a3}
+  .b-status{color:var(--ink);background:#fff;border-color:var(--line-strong)}
+
+  .row{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-soft);margin:6px 0}
+  .row .k{min-width:58px;color:var(--ink);font-weight:500}
+  .row a{color:var(--seal);text-decoration:none;font-weight:500}
+  .row a:hover{text-decoration:underline}
+  .mono{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+  .divider{height:1px;background:var(--line);margin:12px 0}
+
+  .actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .actions select,.actions input{
+    font-family:inherit;font-size:13px;border:1px solid var(--line-strong);border-radius:7px;
+    padding:6px 9px;background:#fff;color:var(--ink);
+  }
+  .actions input{flex:1;min-width:120px}
+  .link-btn{
+    font-family:inherit;font-size:13px;font-weight:700;text-decoration:none;
+    background:var(--seal);color:#fff;border:none;border-radius:7px;padding:7px 12px;cursor:pointer;
+  }
+  .link-btn:hover{background:var(--seal-ink)}
+  .note{width:100%;margin-top:8px;font-family:inherit;font-size:13px;border:1px solid var(--line);
+    border-radius:7px;padding:8px;background:#fff;resize:vertical;min-height:38px}
+
+  .empty{text-align:center;color:var(--ink-soft);padding:60px 20px}
+  .empty h2{font-size:22px;color:var(--ink);margin-bottom:6px}
+
+  /* ---- Gate ---- */
+  .gate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:50}
+  .gate-card{background:var(--slip);border:1px solid var(--line);border-top:3px solid var(--seal);
+    border-radius:6px;padding:28px;max-width:340px;width:90%;box-shadow:var(--shadow)}
+  .gate-card h2{font-size:22px;margin-bottom:4px}
+  .gate-card p{color:var(--ink-soft);font-size:13px;margin:0 0 16px}
+  .gate-card input{width:100%;font-family:inherit;font-size:15px;padding:10px 12px;
+    border:1px solid var(--line-strong);border-radius:8px;margin-bottom:10px}
+  .gate-card button{width:100%;font-family:inherit;font-weight:700;font-size:15px;color:#fff;
+    background:var(--seal);border:none;border-radius:8px;padding:11px;cursor:pointer}
+  .gate-err{color:var(--seal);font-size:13px;min-height:18px;margin-top:2px}
+
+  /* ---- Modal (catalog) ---- */
+  .modal{position:fixed;inset:0;background:rgba(27,23,20,.35);display:none;
+    align-items:flex-start;justify-content:center;z-index:40;padding:40px 16px;overflow:auto}
+  .modal.open{display:flex}
+  .modal-card{background:var(--slip);border-radius:8px;max-width:820px;width:100%;
+    box-shadow:0 24px 60px -20px rgba(0,0,0,.5);overflow:hidden}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;
+    padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
+  .modal-head h2{font-size:20px}
+  .modal-body{padding:20px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:start;padding:8px 6px;border-bottom:1px solid var(--line)}
+  th{color:var(--ink-soft);font-weight:700}
+  .margin-good{color:var(--paid);font-weight:700}
+  .margin-bad{color:var(--seal);font-weight:700}
+  .cat-form{display:grid;grid-template-columns:70px 1fr 90px 90px 1fr auto;gap:8px;margin-top:16px;align-items:end}
+  .cat-form label{display:flex;flex-direction:column;font-size:11px;color:var(--ink-soft);gap:3px}
+  .cat-form input{font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line-strong);border-radius:7px}
+  .icon-x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-soft);line-height:1}
+  .demo-banner{background:var(--pend-bg);color:var(--pend);border:1px solid #e5d3a3;
+    border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;margin:14px auto 0;max-width:1080px}
+  @media(max-width:620px){
+    .cat-form{grid-template-columns:1fr 1fr}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- שער סיסמה -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h2>לוח הזמנות</h2>
+    <p>הזינו את סיסמת הניהול כדי להיכנס.</p>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="סיסמה" />
+    <button id="pwBtn">כניסה</button>
+    <div class="gate-err" id="pwErr"></div>
+  </div>
+</div>
+
+<header hidden id="app">
+  <h1 id="bizName">הקו הטלפוני</h1>
+  <span class="sub">הזמנות שהתקבלו בקו</span>
+  <div class="spacer"></div>
+  <span class="pill-count" id="newCount">0 חדשות</span>
+  <button class="ghost-btn" id="catBtn">קטלוג מוצרים</button>
+  <button class="ghost-btn" id="refreshBtn">רענון</button>
+</header>
+
+<div id="demoBanner" class="demo-banner" hidden>
+  מצב תצוגה — אין חיבור לשרת, המוצג הוא נתוני דוגמה. כשמריצים <span class="mono">npm start</span> וניגשים דרך <span class="mono">/admin</span>, יופיעו ההזמנות האמיתיות.
+</div>
+
+<div class="toolbar" id="toolbar" hidden>
+  <button class="tab" data-f="new" aria-selected="true">חדשות</button>
+  <button class="tab" data-f="ordered" aria-selected="false">הוזמנו בספק</button>
+  <button class="tab" data-f="shipped" aria-selected="false">נשלחו</button>
+  <button class="tab" data-f="done" aria-selected="false">הושלמו</button>
+  <button class="tab" data-f="all" aria-selected="false">הכל</button>
+</div>
+
+<main id="main" hidden>
+  <div class="slips" id="slips"></div>
+</main>
+
+<!-- מודל קטלוג -->
+<div class="modal" id="catModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>קטלוג מוצרים</h2>
+      <button class="icon-x" id="catClose" aria-label="סגירה">×</button>
+    </div>
+    <div class="modal-body">
+      <table>
+        <thead>
+          <tr><th>קוד</th><th>שם</th><th>מכירה</th><th>עלות</th><th>רווח</th><th>קישור ספק</th><th></th></tr>
+        </thead>
+        <tbody id="catBody"></tbody>
+      </table>
+      <div class="cat-form">
+        <label>קוד<input id="f_code" /></label>
+        <label>שם המוצר<input id="f_name" /></label>
+        <label>מכירה ₪<input id="f_price" type="number" /></label>
+        <label>עלות ₪<input id="f_cost" type="number" /></label>
+        <label>קישור עליבאבא<input id="f_url" placeholder="https://..." /></label>
+        <button class="link-btn" id="catSave">הוספה / עדכון</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const API = ""; // אותו origin
+  let PW = "";
+  let ORDERS = [];
+  let CATALOG = [];
+  let FILTER = "new";
+  let DEMO = false;
+
+  // -- דוגמה למצב ללא שרת --
+  const DEMO_ORDERS = [
+    {id:1042,createdAt:new Date(Date.now()-9*6e4).toISOString(),phone:"0527000000",productName:"מטריה מתקפלת",qty:2,unitPrice:79,total:158,paymentStatus:"paid",paymentRef:"TRZ-88213",status:"new",supplierUrl:"https://www.alibaba.com/product-detail/example",supplierOrderId:"",notes:"",addressRecording:"rec_11.wav"},
+    {id:1041,createdAt:new Date(Date.now()-52*6e4).toISOString(),phone:"0533111111",productName:"סט כלי מטבח",qty:1,unitPrice:149,total:149,paymentStatus:"pending",paymentRef:"",status:"new",supplierUrl:"",supplierOrderId:"",notes:"",addressRecording:"rec_09.wav"},
+    {id:1039,createdAt:new Date(Date.now()-3*36e5).toISOString(),phone:"0548222222",productName:"מנורת לילה",qty:3,unitPrice:59,total:177,paymentStatus:"paid",paymentRef:"TRZ-88190",status:"ordered",supplierUrl:"https://www.alibaba.com/product-detail/example",supplierOrderId:"AE-556677",notes:"נשלח למחסן ב-ב",addressRecording:"rec_02.wav"},
+  ];
+  const DEMO_CATALOG = [
+    {code:"1",name:"מטריה מתקפלת",price:79,cost:14,supplierUrl:"https://www.alibaba.com/product-detail/example",active:true},
+    {code:"2",name:"סט כלי מטבח",price:149,cost:38,supplierUrl:"",active:true},
+    {code:"3",name:"מנורת לילה",price:59,cost:11,supplierUrl:"https://www.alibaba.com/product-detail/example",active:true},
+  ];
+
+  const $ = (s)=>document.querySelector(s);
+  const el = (t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+
+  function headers(){return {"Content-Type":"application/json","x-admin-password":PW};}
+
+  async function api(path,opts={}){
+    const r = await fetch(API+path,{...opts,headers:{...headers(),...(opts.headers||{})}});
+    if(r.status===401) throw new Error("unauthorized");
+    if(!r.ok) throw new Error("http "+r.status);
+    return r.json();
+  }
+
+  // ---- כניסה ----
+  async function tryLogin(pw){
+    PW = pw;
+    try{
+      const o = await api("/api/orders");
+      ORDERS = o;
+      try{ CATALOG = await api("/api/catalog"); }catch(_){CATALOG=[];}
+      DEMO = false;
+      enter();
+    }catch(e){
+      if(e.message==="unauthorized"){ $("#pwErr").textContent="סיסמה שגויה."; return; }
+      // אין שרת בכלל → מצב תצוגה
+      DEMO = true; ORDERS = DEMO_ORDERS.slice(); CATALOG = DEMO_CATALOG.slice();
+      enter();
+    }
+  }
+
+  function enter(){
+    try{ localStorage.setItem("mdz_pw",PW); }catch(_){}
+    $("#gate").style.display="none";
+    $("#app").hidden=false; $("#toolbar").hidden=false; $("#main").hidden=false;
+    $("#demoBanner").hidden = !DEMO;
+    render();
+  }
+
+  // ---- תצוגה ----
+  function timeAgo(iso){
+    const d=(Date.now()-new Date(iso))/6e4;
+    if(d<1) return "עכשיו";
+    if(d<60) return Math.round(d)+" דק'";
+    if(d<1440) return Math.round(d/60)+" שע'";
+    return Math.round(d/1440)+" ימ'";
+  }
+  const STATUS_HE={new:"חדשה",ordered:"הוזמן בספק",shipped:"נשלח",done:"הושלם",canceled:"בוטל"};
+
+  function matches(o){
+    if(FILTER==="all") return true;
+    return o.status===FILTER;
+  }
+
+  function render(){
+    const list = ORDERS.filter(matches);
+    const newN = ORDERS.filter(o=>o.status==="new").length;
+    $("#newCount").textContent = newN+" חדשות";
+    const wrap = $("#slips"); wrap.innerHTML="";
+
+    if(list.length===0){
+      const e=el("div","empty");
+      e.innerHTML="<h2>אין הזמנות כאן</h2><p>כשמתקבלת הזמנה בקו, היא תופיע כאן מיד.</p>";
+      wrap.appendChild(e); return;
+    }
+
+    for(const o of list){
+      wrap.appendChild(slip(o));
+    }
+  }
+
+  function slip(o){
+    const s=el("div","slip");
+
+    const head=el("div","slip-head");
+    const stamp=el("div","stamp"); stamp.textContent="#"+o.id;
+    const when=el("div","when"); when.textContent=timeAgo(o.createdAt);
+    head.append(stamp,when); s.appendChild(head);
+
+    const prod=el("div","prod"); prod.textContent=o.productName||"—"; s.appendChild(prod);
+    const qt=el("div","qtytotal");
+    qt.innerHTML=`${o.qty} יח' · <b>₪${o.total}</b> <span class="mono">(₪${o.unitPrice} ליח')</span>`;
+    s.appendChild(qt);
+
+    const badges=el("div","badges");
+    const pay=el("span","badge "+(o.paymentStatus==="paid"?"b-paid":"b-pend"));
+    pay.textContent = o.paymentStatus==="paid" ? ("שולם"+(o.paymentRef?" · "+o.paymentRef:"")) : "ממתין לתשלום";
+    const st=el("span","badge b-status"); st.textContent=STATUS_HE[o.status]||o.status;
+    badges.append(pay,st); s.appendChild(badges);
+
+    const rPhone=el("div","row");
+    rPhone.innerHTML=`<span class="k">טלפון</span><span class="mono">${o.phone||"—"}</span>`;
+    s.appendChild(rPhone);
+
+    const rAddr=el("div","row");
+    rAddr.innerHTML=`<span class="k">כתובת</span>`+
+      (o.addressRecording?`<span>הקלטה: <span class="mono">${o.addressRecording}</span> (בפאנל ימות)</span>`:`<span>—</span>`);
+    s.appendChild(rAddr);
+
+    s.appendChild(el("div","divider"));
+
+    // מילוי הזמנה בספק
+    const actions=el("div","actions");
+    if(o.supplierUrl){
+      const a=el("a","link-btn"); a.href=o.supplierUrl; a.target="_blank"; a.rel="noopener";
+      a.textContent="פתח בעליבאבא ↗"; actions.appendChild(a);
+    }
+    const sel=el("select");
+    ["new","ordered","shipped","done","canceled"].forEach(v=>{
+      const op=el("option"); op.value=v; op.textContent=STATUS_HE[v]; if(v===o.status)op.selected=true; sel.appendChild(op);
+    });
+    sel.onchange=()=>patch(o,{status:sel.value});
+    actions.appendChild(sel);
+
+    const soId=el("input"); soId.placeholder="מס' הזמנה בספק"; soId.value=o.supplierOrderId||"";
+    soId.onchange=()=>patch(o,{supplierOrderId:soId.value});
+    actions.appendChild(soId);
+    s.appendChild(actions);
+
+    const note=el("textarea","note"); note.placeholder="הערות פנימיות…"; note.value=o.notes||"";
+    let t; note.oninput=()=>{clearTimeout(t);t=setTimeout(()=>patch(o,{notes:note.value}),600);};
+    s.appendChild(note);
+
+    return s;
+  }
+
+  async function patch(o,body){
+    Object.assign(o,body);
+    if(o===ORDERS.find(x=>x.id===o.id)) {} // keep ref
+    render();
+    if(DEMO) return;
+    try{ await api("/api/orders/"+o.id,{method:"POST",body:JSON.stringify(body)}); }
+    catch(e){ console.error(e); }
+  }
+
+  // ---- קטלוג ----
+  function renderCatalog(){
+    const b=$("#catBody"); b.innerHTML="";
+    for(const p of CATALOG){
+      const tr=el("tr");
+      const margin = p.price - p.cost;
+      const pct = p.price? Math.round(margin/p.price*100):0;
+      const good = margin>0;
+      tr.innerHTML=`
+        <td class="mono">${p.code}</td>
+        <td>${p.name}</td>
+        <td class="mono">₪${p.price}</td>
+        <td class="mono">₪${p.cost}</td>
+        <td class="${good?'margin-good':'margin-bad'} mono">₪${margin} · ${pct}%</td>
+        <td>${p.supplierUrl?`<a href="${p.supplierUrl}" target="_blank" rel="noopener">קישור ↗</a>`:'—'}</td>
+        <td><button class="icon-x" title="מחיקה">×</button></td>`;
+      tr.querySelector(".icon-x").onclick=()=>delProduct(p.code);
+      b.appendChild(tr);
+    }
+  }
+  async function saveProduct(){
+    const p={
+      code:$("#f_code").value.trim(), name:$("#f_name").value.trim(),
+      price:Number($("#f_price").value)||0, cost:Number($("#f_cost").value)||0,
+      supplierUrl:$("#f_url").value.trim(), active:true
+    };
+    if(!p.code||!p.name){alert("קוד ושם הם שדות חובה");return;}
+    if(DEMO){ const i=CATALOG.findIndex(x=>x.code===p.code); i>=0?CATALOG[i]=p:CATALOG.push(p); }
+    else{ try{ await api("/api/catalog",{method:"POST",body:JSON.stringify(p)}); CATALOG=await api("/api/catalog"); }catch(e){alert("שגיאה בשמירה");return;} }
+    ["f_code","f_name","f_price","f_cost","f_url"].forEach(id=>$("#"+id).value="");
+    renderCatalog();
+  }
+  async function delProduct(code){
+    if(!confirm("למחוק את המוצר?"))return;
+    if(DEMO){ CATALOG=CATALOG.filter(p=>p.code!==code); }
+    else{ try{ await api("/api/catalog/"+encodeURIComponent(code),{method:"DELETE"}); CATALOG=await api("/api/catalog"); }catch(e){} }
+    renderCatalog();
+  }
+
+  async function refresh(){
+    if(DEMO){render();return;}
+    try{ ORDERS=await api("/api/orders"); render(); }catch(e){console.error(e);}
+  }
+
+  // ---- אירועים ----
+  $("#pwBtn").onclick=()=>tryLogin($("#pw").value);
+  $("#pw").addEventListener("keydown",e=>{if(e.key==="Enter")tryLogin($("#pw").value);});
+  $("#refreshBtn").onclick=refresh;
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.onclick=()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected","false"));
+      t.setAttribute("aria-selected","true"); FILTER=t.dataset.f; render();
+    };
+  });
+  $("#catBtn").onclick=()=>{renderCatalog();$("#catModal").classList.add("open");};
+  $("#catClose").onclick=()=>$("#catModal").classList.remove("open");
+  $("#catModal").onclick=e=>{if(e.target.id==="catModal")$("#catModal").classList.remove("open");};
+  $("#catSave").onclick=saveProduct;
+
+  // רענון אוטומטי כל 30 שנ' (לא בדמו)
+  setInterval(()=>{if(!DEMO && !$("#app").hidden)refresh();},30000);
+
+  // ניסיון כניסה אוטומטי אם יש סיסמה שמורה
+  let saved=""; try{saved=localStorage.getItem("mdz_pw")||"";}catch(_){}
+  if(saved){ tryLogin(saved); } else { $("#pw").focus(); }
+})();
+</script>
+</body>
+</html>
